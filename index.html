@@ -101,12 +101,12 @@
         </div>
 
         <!-- DETAIL VIEW -->
-        <div id="detailView" class="hidden w-full max-w-7xl flex flex-col md:flex-row gap-6 items-start">
+        <div id="detailView" class="hidden w-full max-w-7xl flex flex-col md:flex-row gap-6 items-start md:items-stretch">
             <div id="detailCardContainer" class="w-full md:w-[270px] flex-shrink-0 flex justify-center">
                 <!-- Die aktive Charakterkarte im Detailmodus -->
             </div>
 
-            <div id="detailPanelBox" class="flex-1 w-full bg-panelBg/85 backdrop-blur-md border border-[#332d47] rounded-xl p-5 flex flex-col justify-between shadow-2xl transition-colors duration-300 min-h-[536px]">
+            <div id="detailPanelBox" class="flex-1 w-full bg-panelBg/85 backdrop-blur-md border border-[#332d47] rounded-xl p-5 flex flex-col justify-between shadow-2xl transition-colors duration-300 min-h-[650px]">
                 <div class="flex flex-col flex-1">
                     <h2 id="detailPanelTitle" class="text-accent font-bold text-base mb-4">Artefakt-Einzelwerte, Level & Substats</h2>
                     <!-- 5 Artefakt-Slots; die Buttons stehen in der freien Zelle neben der Krone (siehe renderArtifactPanel) -->
@@ -549,7 +549,7 @@
 
             if (currentTeamMembers.length < 4) {
                 const addSlot = document.createElement('div');
-                addSlot.className = "w-[270px] h-[536px] bg-cardBg/40 backdrop-blur-md border-2 border-dashed border-[#332d47] hover:border-accent hover:bg-cardBg/70 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-2xl";
+                addSlot.className = "w-[270px] h-[650px] bg-cardBg/40 backdrop-blur-md border-2 border-dashed border-[#332d47] hover:border-accent hover:bg-cardBg/70 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-2xl";
                 addSlot.onclick = openCharModal;
                 addSlot.innerHTML = `
                     <span class="text-5xl text-accent mb-3 font-bold">+</span>
@@ -568,7 +568,7 @@
             const elemColor = ELEMENT_COLORS[char.element] || '#5bc0be';
             const elemBg = ELEMENT_BG_MAP[char.element] || 'rgba(18, 16, 27, 0.45)';
 
-            card.className = `w-[270px] h-[536px] backdrop-blur-md border rounded-xl flex flex-col overflow-hidden text-sm flex-shrink-0 shadow-2xl transition-all hover:scale-[1.01]`;
+            card.className = `w-[270px] ${isDetailMode ? 'min-h-[650px]' : 'h-[650px]'} backdrop-blur-md border rounded-xl flex flex-col overflow-hidden text-sm flex-shrink-0 shadow-2xl transition-all hover:scale-[1.01]`;
             card.style.borderColor = `${elemColor}66`;
 
             const rarityGradient = char.rarity == 5
