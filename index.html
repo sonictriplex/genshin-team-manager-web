@@ -825,12 +825,40 @@
 
             // Die Buttons stehen in der freien Zelle neben der Krone, unten bündig mit den Slot-Karten
             const buttons = document.createElement('div');
-            buttons.className = "flex justify-end items-end gap-3";
+            buttons.className = "flex flex-wrap justify-end content-end gap-2";
             buttons.innerHTML = `
-                <button onclick="renderOverview()" class="bg-[#252136]/80 hover:bg-[#332d47] text-accent font-bold text-xs px-4 py-2 rounded-md border border-[#332d47] border-accent transition-colors">Zurück zur Übersicht</button>
-                <button onclick="saveCurrentTeam()" class="bg-accent hover:bg-accentHover text-darkBg font-bold text-xs px-4 py-2 rounded-md transition-colors shadow-md">Speichern</button>
+                <button onclick="resetArtifactStats()" title="Leert alle eingegebenen Artefakt-Einzelwerte dieser Karte" class="bg-[#252136]/80 hover:bg-[#332d47] text-accent font-bold text-xs px-3 py-2 rounded-md border border-[#332d47] transition-colors">Zurücksetzen</button>
+                <button onclick="reloadArtifactStats()" title="Lädt die gespeicherten Artefaktwerte dieses Charakters neu" class="bg-[#252136]/80 hover:bg-[#332d47] text-accent font-bold text-xs px-3 py-2 rounded-md border border-[#332d47] transition-colors">Neu laden</button>
+                <button onclick="renderOverview()" class="bg-[#252136]/80 hover:bg-[#332d47] text-accent font-bold text-xs px-3 py-2 rounded-md border border-[#332d47] transition-colors border-accent">Zurück</button>
+                <button onclick="saveCurrentTeam()" class="bg-accent hover:bg-accentHover text-darkBg font-bold text-xs px-3 py-2 rounded-md transition-colors shadow-md">Speichern</button>
             `;
             grid.appendChild(buttons);
+        }
+
+        // Leert alle Artefakt-Einzelwerte des geöffneten Charakters (gespeichert wird erst mit "Speichern")
+        function resetArtifactStats() {
+            const item = currentTeamMembers[activeDetailIndex];
+            if (!item) return;
+            item.saved = { ...(item.saved || {}), artifact_stats: {} };
+            renderArtifactPanel(item);
+        }
+
+        // Verwirft die Eingaben und lädt die zuletzt gespeicherten Artefaktwerte des Charakters
+        function reloadArtifactStats() {
+            const item = currentTeamMembers[activeDetailIndex];
+            if (!item) return;
+
+            // Builds gelten pro Nutzer und Charakter, jedes gespeicherte Team mit dem Charakter liefert denselben Stand
+            let stats = {};
+            for (const members of Object.values(savedTeams)) {
+                const found = members.find(m => m.character?.name === item.character.name);
+                if (found) {
+                    stats = found.saved?.artifact_stats || {};
+                    break;
+                }
+            }
+            item.saved = { ...(item.saved || {}), artifact_stats: JSON.parse(JSON.stringify(stats)) };
+            renderArtifactPanel(item);
         }
 
         function updateArtProp(slotName, prop, val) {
