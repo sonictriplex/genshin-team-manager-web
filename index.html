@@ -107,16 +107,10 @@
             </div>
 
             <div id="detailPanelBox" class="flex-1 w-full bg-panelBg/85 backdrop-blur-md border border-[#332d47] rounded-xl p-5 flex flex-col justify-between shadow-2xl transition-colors duration-300 min-h-[536px]">
-                <div>
+                <div class="flex flex-col flex-1">
                     <h2 id="detailPanelTitle" class="text-accent font-bold text-base mb-4">Artefakt-Einzelwerte, Level & Substats</h2>
-                    <div id="artifactSlotsGrid" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                        <!-- 5 Artefakt-Slots -->
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 mt-6">
-                    <button onclick="renderOverview()" class="bg-[#252136]/80 hover:bg-[#332d47] text-accent font-bold text-xs px-4 py-2 rounded-md border border-[#332d47] border-accent transition-colors">Zurück zur Übersicht</button>
-                    <button onclick="saveCurrentTeam()" class="bg-accent hover:bg-accentHover text-darkBg font-bold text-xs px-4 py-2 rounded-md transition-colors shadow-md">Speichern</button>
+                    <!-- 5 Artefakt-Slots; die Buttons stehen in der freien Zelle neben der Krone (siehe renderArtifactPanel) -->
+                    <div id="artifactSlotsGrid" class="grid grid-cols-1 xl:grid-cols-2 xl:grid-rows-3 gap-4 flex-1"></div>
                 </div>
             </div>
         </div>
@@ -828,6 +822,15 @@
                 `;
                 grid.appendChild(slotBox);
             });
+
+            // Die Buttons stehen in der freien Zelle neben der Krone, unten bündig mit den Slot-Karten
+            const buttons = document.createElement('div');
+            buttons.className = "flex justify-end items-end gap-3";
+            buttons.innerHTML = `
+                <button onclick="renderOverview()" class="bg-[#252136]/80 hover:bg-[#332d47] text-accent font-bold text-xs px-4 py-2 rounded-md border border-[#332d47] border-accent transition-colors">Zurück zur Übersicht</button>
+                <button onclick="saveCurrentTeam()" class="bg-accent hover:bg-accentHover text-darkBg font-bold text-xs px-4 py-2 rounded-md transition-colors shadow-md">Speichern</button>
+            `;
+            grid.appendChild(buttons);
         }
 
         function updateArtProp(slotName, prop, val) {
