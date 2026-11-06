@@ -126,6 +126,11 @@
     <!-- FOOTER (ZENTRIERTE USER-INFO & LOGOUT-BUTTON) -->
     <footer class="w-full max-w-7xl mx-auto mt-8 mb-4 flex flex-col items-center justify-center gap-2">
         <span id="userInfo" class="text-xs font-bold text-accent hidden"></span>
+        <div id="transferButtons" class="hidden flex items-center gap-2">
+            <button onclick="exportData()" class="bg-[#2d293e] hover:bg-[#3d3752] text-accent border border-[#332d47] font-bold text-xs px-4 py-1.5 rounded-md transition-colors shadow-md" title="Speichert alle Builds und Teams als JSON-Datei (kompatibel mit der Desktop-Version)">Exportieren</button>
+            <button onclick="document.getElementById('importFile').click()" class="bg-[#2d293e] hover:bg-[#3d3752] text-accent border border-[#332d47] font-bold text-xs px-4 py-1.5 rounded-md transition-colors shadow-md" title="Liest Builds und Teams aus einer JSON-Datei der Web- oder Desktop-Version ein">Importieren</button>
+            <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importData(this)">
+        </div>
         <button onclick="handleLogout()" id="logoutBtn" class="hidden bg-[#2d293e] hover:bg-[#3d3752] text-gray-300 border border-[#332d47] font-bold text-xs px-4 py-1.5 rounded-md transition-colors shadow-md">
             Logout
         </button>
@@ -330,6 +335,7 @@
                     }
                     const logoutBtn = document.getElementById('logoutBtn');
                     if (logoutBtn) logoutBtn.classList.remove('hidden');
+                    document.getElementById('transferButtons').classList.remove('hidden');
 
                     await loadInitialData();
                 } else {
@@ -874,6 +880,63 @@
                 }
             } catch (err) {
                 alert("Fehler beim Speichern: " + err);
+            }
+        }
+
+        // Export: lädt alle Builds und Teams als JSON-Datei herunter (gleiches Format wie die Desktop-Version)
+        async function exportData() {
+            try {
+                const res = await fetch(`${API_BASE}/transfer.php`);
+                const data = await res.json();
+                if (!res.ok) return alert(data.error || "Fehler beim Exportieren.");
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'genshin-team-manager.json';
+                link.click();
+                URL.revokeObjectURL(link.href);
+            } catch (err) {
+                alert("Fehler beim Exportieren: " + err);
+            }
+        }
+
+        // Import: liest eine JSON-Datei ein, wahlweise zusammenführen oder alles ersetzen
+        async function importData(input) {
+            const file = input.files[0];
+            input.value = '';  // gleiche Datei später erneut wählbar
+            if (!file) return;
+
+            let data;
+            try {
+                data = JSON.parse(await file.text());
+            } catch (err) {
+                return alert("Die Datei ist keine gültige JSON-Datei.");
+            }
+
+            let mode = 'merge';
+            if (!confirm("Importieren und mit den vorhandenen Daten zusammenführen?\n\nGleichnamige Builds und Teams werden überschrieben, alles andere bleibt.")) {
+                if (!confirm("Stattdessen ALLES ersetzen?\n\nAlle vorhandenen Builds und Teams werden vorher gelöscht.")) return;
+                mode = 'replace';
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/transfer.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode, data })
+                });
+                const result = await res.json();
+                if (!res.ok) return alert(result.error || "Fehler beim Importieren.");
+
+                let text = `${result.builds} Builds und ${result.teams} Teams importiert.`;
+                if (result.skipped.length) text += "\n\nUnbekannte Charaktere (übersprungen):\n" + result.skipped.join(", ");
+                alert(text);
+
+                activeDetailIndex = -1;
+                await loadInitialData();
+            } catch (err) {
+                alert("Fehler beim Importieren: " + err);
             }
         }
 
