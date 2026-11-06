@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genshin Impact - Team & Build Manager</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/assets/images/paimon.png">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0914',
+                        cardBg: 'rgba(26, 24, 37, 0.75)',
+                        panelBg: 'rgba(18, 16, 27, 0.80)',
+                        inputBg: 'rgba(18, 16, 27, 0.65)',
+                        accent: '#5bc0be',
+                        accentHover: '#4ab0ad',
+                        gold: '#d89f53',
+                        danger: '#df4a28'
+                    },
+                    fontFamily: {
+                        genshin: ['GenshinFont', 'system-ui', '-apple-system', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Einbinden der TTF-Schriftart aus dem assets-Ordner */
+        @font-face {
+            font-family: 'GenshinFont';
+            src: url('/assets/zh-cn.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            background: url('/assets/images/genshin-impact.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #ffffff;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        /* Überschrift-Effekt mit TTF-Schriftart */
+        .genshin-title {
+            font-family: 'GenshinFont', sans-serif;
+            letter-spacing: 0.05em;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(91, 192, 190, 0.4);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #12101b; }
+        ::-webkit-scrollbar-thumb { background: #332d47; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #5bc0be; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 relative">
+
+    <!-- DARK OVERLAY & BLUR FÜR BESSERE LESBARKEIT -->
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-[2px] pointer-events-none -z-10"></div>
+
+    <!-- SEITEN-ÜBERSCHRIFT MIT TTF-SCHRIFTART -->
+    <header class="w-full max-w-7xl mx-auto mt-8 mb-12 text-center">
+        <h1 class="genshin-title text-3xl sm:text-4xl font-bold text-accent tracking-wide">
+            GENSHIN IMPACT Team & Build Manager
+        </h1>
+    </header>
+
+    <!-- HEADER / TOP BAR (TEAM-STEUERUNG) -->
+    <div class="flex flex-wrap items-center justify-between gap-4 bg-cardBg/80 backdrop-blur-md p-4 rounded-xl border border-[#2d293e]/60 shadow-2xl mb-6 max-w-7xl w-full mx-auto">
+        <div class="flex items-center gap-3">
+            <span class="text-gray-300 font-bold text-sm">Team Name:</span>
+            <input type="text" id="teamNameInput" value="Neues Team" class="bg-inputBg text-white px-3 py-1.5 rounded-md border border-[#332d47] text-sm focus:border-accent outline-none w-44">
+            <button onclick="saveCurrentTeam()" class="bg-accent hover:bg-accentHover text-darkBg font-bold text-sm px-4 py-1.5 rounded-md transition-colors shadow-md">Team Speichern</button>
+
+            <!-- BUTTON NEUES TEAM -->
+            <button onclick="createNewTeam()" class="bg-[#2d293e] hover:bg-[#3d3752] text-accent border border-[#332d47] border-accent/60 font-bold text-sm px-3 py-1.5 rounded-md transition-colors shadow-md flex items-center gap-1.5" title="Erstellt ein leeres Team">
+                <span>+</span> Neues Team
+            </button>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <span class="text-gray-300 font-bold text-sm">Gespeicherte Teams:</span>
+            <select id="teamsSelect" onchange="onTeamSelected(this.value)" class="bg-inputBg text-white px-3 py-1.5 rounded-md border border-[#332d47] text-sm focus:border-accent outline-none w-48">
+                <option value="">— Team wählen —</option>
+            </select>
+            <button onclick="deleteCurrentTeam()" class="bg-danger hover:opacity-90 text-white font-bold text-sm px-3 py-1.5 rounded-md transition-opacity shadow-md">Löschen</button>
+        </div>
+    </div>
+
+    <!-- MAIN STACK CONTAINER -->
+    <main class="flex-1 flex flex-col items-center w-full">
+
+        <!-- TEAM OVERVIEW -->
+        <div id="overviewView" class="flex flex-wrap justify-center gap-6 w-full max-w-7xl">
+            <!-- Dynamisch generiert durch JS -->
+        </div>
+
+        <!-- DETAIL VIEW -->
+        <div id="detailView" class="hidden w-full max-w-7xl flex flex-col md:flex-row gap-6 items-start">
+            <div id="detailCardContainer" class="w-full md:w-[270px] flex-shrink-0 flex justify-center">
+                <!-- Die aktive Charakterkarte im Detailmodus -->
+            </div>
+
+            <div id="detailPanelBox" class="flex-1 w-full bg-panelBg/85 backdrop-blur-md border border-[#332d47] rounded-xl p-5 flex flex-col justify-between shadow-2xl transition-colors duration-300 min-h-[536px]">
+                <div>
+                    <h2 id="detailPanelTitle" class="text-accent font-bold text-base mb-4">Artefakt-Einzelwerte, Level & Substats</h2>
+                    <div id="artifactSlotsGrid" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                        <!-- 5 Artefakt-Slots -->
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <button onclick="renderOverview()" class="bg-[#252136]/80 hover:bg-[#332d47] text-accent font-bold text-xs px-4 py-2 rounded-md border border-[#332d47] border-accent transition-colors">Zurück zur Übersicht</button>
+                    <button onclick="saveCurrentTeam()" class="bg-accent hover:bg-accentHover text-darkBg font-bold text-xs px-4 py-2 rounded-md transition-colors shadow-md">Speichern</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER (ZENTRIERTE USER-INFO & LOGOUT-BUTTON) -->
+    <footer class="w-full max-w-7xl mx-auto mt-8 mb-4 flex flex-col items-center justify-center gap-2">
+        <span id="userInfo" class="text-xs font-bold text-accent hidden"></span>
+        <button onclick="handleLogout()" id="logoutBtn" class="hidden bg-[#2d293e] hover:bg-[#3d3752] text-gray-300 border border-[#332d47] font-bold text-xs px-4 py-1.5 rounded-md transition-colors shadow-md">
+            Logout
+        </button>
+    </footer>
+
+    <!-- MODAL: LOGIN / REGISTRIERUNG -->
+    <div id="authModal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-cardBg border border-[#332d47] rounded-xl max-w-md w-full p-6 shadow-2xl text-white backdrop-blur-md">
+            <h2 id="authTitle" class="text-xl font-bold text-accent mb-4 text-center">Anmelden</h2>
+
+            <div id="authError" class="hidden mb-4 p-3 bg-danger/20 border border-danger/60 rounded text-red-200 text-xs font-semibold"></div>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 mb-1">Benutzername</label>
+                    <input type="text" id="authUsername" required class="w-full bg-inputBg border border-[#332d47] focus:border-accent text-white px-3 py-2 rounded text-sm outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 mb-1">Passwort</label>
+                    <input type="password" id="authPassword" required class="w-full bg-inputBg border border-[#332d47] focus:border-accent text-white px-3 py-2 rounded text-sm outline-none">
+                </div>
+
+                <button type="submit" id="authSubmitBtn" class="w-full py-2 bg-accent hover:bg-accentHover text-darkBg font-bold text-sm rounded shadow-md transition-colors">
+                    Einloggen
+                </button>
+            </form>
+
+            <div class="mt-4 pt-4 border-t border-[#252136] text-center text-xs text-gray-400">
+                <span id="authToggleText">Noch keinen Account?</span>
+                <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-accent underline font-bold ml-1 hover:text-accentHover">
+                    Jetzt registrieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CHARAKTER SUCHEN -->
+    <div id="charModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-cardBg border border-[#332d47] rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col p-5 shadow-2xl backdrop-blur-md">
+            <h3 class="text-lg font-bold text-white mb-3">Charakter auswählen</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                <input type="text" id="charSearch" oninput="filterCharacters()" placeholder="Suchen..." class="bg-inputBg text-white px-3 py-1 rounded text-xs border border-[#332d47] outline-none focus:border-accent">
+                <select id="charRegionFilter" onchange="filterCharacters()" class="bg-inputBg text-white px-2 py-1 rounded text-xs border border-[#332d47] outline-none focus:border-accent">
+                    <option value="">Alle Regionen</option>
+                    <option>Mondstadt</option><option>Liyue</option><option>Inazuma</option><option>Sumeru</option><option>Fontaine</option><option>Natlan</option><option>Snezhnaya</option>
+                </select>
+                <select id="charElemFilter" onchange="filterCharacters()" class="bg-inputBg text-white px-2 py-1 rounded text-xs border border-[#332d47] outline-none focus:border-accent">
+                    <option value="">Alle Elemente</option>
+                    <option>Anemo</option><option>Geo</option><option>Electro</option><option>Dendro</option><option>Hydro</option><option>Pyro</option><option>Cryo</option>
+                </select>
+                <select id="charRarityFilter" onchange="filterCharacters()" class="bg-inputBg text-white px-2 py-1 rounded text-xs border border-[#332d47] outline-none focus:border-accent">
+                    <option value="">Alle Seltenheiten</option>
+                    <option value="5">5 ★</option><option value="4">4 ★</option>
+                </select>
+            </div>
+
+            <div class="flex-1 overflow-y-auto border border-[#332d47] rounded-lg">
+                <table class="w-full text-left text-xs text-gray-300">
+                    <thead class="bg-panelBg text-gold sticky top-0 font-bold border-b border-[#332d47]">
+                        <tr>
+                            <th class="p-2">Icon</th>
+                            <th class="p-2">Name</th>
+                            <th class="p-2">Element</th>
+                            <th class="p-2">Waffe</th>
+                            <th class="p-2">Region</th>
+                            <th class="p-2 text-center">★</th>
+                        </tr>
+                    </thead>
+                    <tbody id="charTableBody" class="divide-y divide-[#252136]">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end mt-4">
+                <button onclick="closeCharModal()" class="bg-[#2d293e] text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-[#332d47]">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: WAFFE SUCHEN & AUSWÄHLEN -->
+    <div id="weaponModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-cardBg border border-[#332d47] rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col p-5 shadow-2xl backdrop-blur-md">
+            <h3 class="text-lg font-bold text-white mb-3">Waffe auswählen</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                <input type="text" id="weaponSearch" oninput="filterWeapons()" placeholder="Waffennamen suchen..." class="bg-inputBg text-white px-3 py-1.5 rounded text-xs border border-[#332d47] outline-none focus:border-accent">
+
+                <select id="weaponTypeFilter" onchange="filterWeapons()" class="bg-inputBg text-white px-2 py-1.5 rounded text-xs border border-[#332d47] outline-none focus:border-accent">
+                    <option value="">Alle Waffentypen</option>
+                    <option value="Einhandschwert">Einhandschwert</option>
+                    <option value="Großschwert">Großschwert</option>
+                    <option value="Stangenwaffe">Stangenwaffe</option>
+                    <option value="Bogen">Bogen</option>
+                    <option value="Katalysator">Katalysator</option>
+                </select>
+
+                <select id="weaponRarityFilter" onchange="filterWeapons()" class="bg-inputBg text-white px-2 py-1.5 rounded text-xs border border-[#332d47] outline-none focus:border-accent">
+                    <option value="">Alle Seltenheiten</option>
+                    <option value="5">5 ★</option>
+                    <option value="4">4 ★</option>
+                    <option value="3">3 ★</option>
+                    <option value="2">2 ★</option>
+                    <option value="1">1 ★</option>
+                </select>
+            </div>
+
+            <div class="flex-1 overflow-y-auto border border-[#332d47] rounded-lg">
+                <table class="w-full text-left text-xs text-gray-300">
+                    <thead class="bg-panelBg text-gold sticky top-0 font-bold border-b border-[#332d47]">
+                        <tr>
+                            <th class="p-2 w-12">Icon</th>
+                            <th class="p-2">Name</th>
+                            <th class="p-2">Typ</th>
+                            <th class="p-2 text-center w-16">★</th>
+                        </tr>
+                    </thead>
+                    <tbody id="weaponTableBody" class="divide-y divide-[#252136]">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between items-center mt-4">
+                <span id="weaponCountLabel" class="text-xs text-gray-400">0 Waffen gefunden</span>
+                <button onclick="closeWeaponModal()" class="bg-[#2d293e] text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-[#332d47]">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT-LOGIK -->
+    <script>
+        const API_BASE = '/api';
+        const IMAGE_BASE = '/assets/images';
+
+        let availableCharacters = [];
+        let availableWeapons = [];
+        let availableArtifacts = [];
+        let savedTeams = {};
+
+        let currentTeamMembers = [];
+        let activeDetailIndex = -1;
+        let activeWeaponTargetIndex = -1;
+
+        let isRegisterMode = false;
+        let currentUsername = "";
+
+        const ARTIFACT_SLOT_NAMES = ["Blume", "Feder", "Sanduhr", "Kelch", "Krone"];
+
+        const SUBSTAT_OPTIONS = [
+            "— Keiner —", "KT%", "KSCH%", "ANG%", "ANG (Fix)",
+            "LP%", "LP (Fix)", "DEF%", "DEF (Fix)",
+            "Elementarkunde", "Aufladerate"
+        ];
+
+        const ELEMENT_COLORS = {
+            "Dendro": "#26bb3a",
+            "Anemo": "#23c197",
+            "Pyro": "#df4a28",
+            "Hydro": "#2393c1",
+            "Electro": "#9643db",
+            "Cryo": "#62c8db",
+            "Geo": "#cba128"
+        };
+
+        const ELEMENT_BG_MAP = {
+            "Hydro": "rgba(18, 48, 70, 0.45)",
+            "Dendro": "rgba(20, 52, 28, 0.45)",
+            "Pyro": "rgba(60, 24, 20, 0.45)",
+            "Electro": "rgba(45, 24, 65, 0.45)",
+            "Anemo": "rgba(18, 54, 46, 0.45)",
+            "Cryo": "rgba(24, 55, 65, 0.45)",
+            "Geo": "rgba(55, 46, 20, 0.45)"
+        };
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Klicks in den Auswahllisten per Event-Delegation (statt onclick mit Namen im HTML)
+            document.getElementById('charTableBody').addEventListener('click', e => {
+                const row = e.target.closest('tr[data-name]');
+                if (row) selectCharacter(row.dataset.name);
+            });
+            document.getElementById('weaponTableBody').addEventListener('click', e => {
+                const row = e.target.closest('tr[data-name]');
+                if (row) selectWeapon(row.dataset.name);
+            });
+
+            await checkAuth();
+        });
+
+        async function checkAuth() {
+            try {
+                const res = await fetch(`${API_BASE}/auth.php?action=status`);
+                const data = await res.json();
+
+                if (data.logged_in) {
+                    currentUsername = data.username;
+                    document.getElementById('authModal').classList.add('hidden');
+
+                    const userSpan = document.getElementById('userInfo');
+                    if (userSpan) {
+                        userSpan.innerText = `Eingeloggt als: ${data.username}`;
+                        userSpan.classList.remove('hidden');
+                    }
+                    const logoutBtn = document.getElementById('logoutBtn');
+                    if (logoutBtn) logoutBtn.classList.remove('hidden');
+
+                    await loadInitialData();
+                } else {
+                    document.getElementById('authModal').classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error("Auth Check fehlgeschlagen:", e);
+            }
+        }
+
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('authTitle').innerText = isRegisterMode ? "Account erstellen" : "Anmelden";
+            document.getElementById('authSubmitBtn').innerText = isRegisterMode ? "Registrieren" : "Einloggen";
+            document.getElementById('authToggleText').innerText = isRegisterMode ? "Bereits registriert?" : "Noch keinen Account?";
+            document.getElementById('authToggleBtn').innerText = isRegisterMode ? "Jetzt einloggen" : "Jetzt registrieren";
+            document.getElementById('authError').classList.add('hidden');
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const username = document.getElementById('authUsername').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const action = isRegisterMode ? 'register' : 'login';
+            const errDiv = document.getElementById('authError');
+
+            try {
+                const res = await fetch(`${API_BASE}/auth.php?action=${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    errDiv.classList.add('hidden');
+                    document.getElementById('authUsername').value = '';
+                    document.getElementById('authPassword').value = '';
+                    await checkAuth();
+                } else {
+                    errDiv.innerText = data.error || "Ein Fehler ist aufgetreten.";
+                    errDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errDiv.innerText = "Netzwerkfehler beim Anmelden.";
+                errDiv.classList.remove('hidden');
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch(`${API_BASE}/auth.php?action=logout`, { method: 'POST' });
+                location.reload();
+            } catch (e) {
+                console.error("Logout Fehler:", e);
+            }
+        }
+
+        async function loadInitialData(preferredTeam = "") {
+            try {
+                const fetchSafe = async (url, fallback = []) => {
+                    try {
+                        const res = await fetch(url);
+                        if (!res.ok) return fallback;
+                        return await res.json();
+                    } catch (e) {
+                        console.warn(`Fehler beim Laden von ${url}:`, e);
+                        return fallback;
+                    }
+                };
+
+                availableCharacters = await fetchSafe(`${API_BASE}/characters.php`, []);
+                availableWeapons = await fetchSafe(`${API_BASE}/weapons.php`, []);
+                availableArtifacts = await fetchSafe(`${API_BASE}/artifacts.php`, []);
+                savedTeams = await fetchSafe(`${API_BASE}/teams.php`, {});
+
+                const teamNames = Object.keys(savedTeams);
+                const targetTeam = preferredTeam || (teamNames.length > 0 ? teamNames[0] : "");
+
+                updateTeamsDropdown(targetTeam);
+
+                if (targetTeam && savedTeams[targetTeam]) {
+                    onTeamSelected(targetTeam);
+                } else {
+                    createNewTeam();
+                }
+            } catch (err) {
+                console.error("Fehler beim Laden der Stammdaten:", err);
+            }
+        }
+
+        function createNewTeam() {
+            activeDetailIndex = -1;
+            document.getElementById('teamNameInput').value = "Neues Team";
+            document.getElementById('teamsSelect').value = "";
+            currentTeamMembers = [];
+            renderOverview();
+        }
+
+        function getIconUrl(name) {
+            if (!name) return '';
+            const clean = name.split('(')[0].trim().toLowerCase()
+                .replace(/ /g, "_").replace(/['’„“\-]/g, "") + ".png";
+            return `${IMAGE_BASE}/${clean}`;
+        }
+
+        // Schützt vor XSS: wandelt HTML-Sonderzeichen in Entities um.
+        // Für JEDEN Wert aus DB/Nutzereingabe verwenden, der per innerHTML eingefügt wird.
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        function updateTeamsDropdown(selectName = "") {
+            const select = document.getElementById('teamsSelect');
+            select.innerHTML = '<option value="">— Team wählen —</option>';
+
+            if (typeof savedTeams === 'object' && savedTeams !== null) {
+                Object.keys(savedTeams).forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    if (name === selectName) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        // =====================================================================
+        // HILFSFUNKTIONEN FÜR ARTEFAKTDATEN (fix für Arrays statt Objekten)
+        // PHP liefert ein leeres Array als [] statt {}. Ein JS-Array verwirft
+        // beim JSON.stringify alle benannten Schlüssel (z. B. "Blume").
+        // Diese Funktionen stellen sicher, dass immer saubere Objekte vorliegen.
+        // =====================================================================
+
+        // Liefert das artifact_stats-Objekt eines Mitglieds (legt es bei Bedarf an)
+        function ensureArtifactStats(index) {
+            const member = currentTeamMembers[index];
+            if (!member.saved) member.saved = {};
+            const stats = member.saved.artifact_stats;
+            if (!stats || typeof stats !== 'object' || Array.isArray(stats)) {
+                member.saved.artifact_stats = {};
+            }
+            return member.saved.artifact_stats;
+        }
+
+        // Liefert einen Slot (z. B. "Blume") mit garantiert 4 Substats der Form {stat, val}
+        function ensureSlot(index, slotName) {
+            const stats = ensureArtifactStats(index);
+            let slot = stats[slotName];
+            if (!slot || typeof slot !== 'object' || Array.isArray(slot)) {
+                slot = { level: 20, rarity: "5★" };
+                stats[slotName] = slot;
+            }
+            if (!Array.isArray(slot.substats)) slot.substats = [];
+            while (slot.substats.length < 4) slot.substats.push({});
+            for (let i = 0; i < 4; i++) {
+                slot.substats[i] = parseSubstatEntry(slot.substats[i]);
+            }
+            return slot;
+        }
+
+        // Normalisiert alle Artefaktdaten eines Mitglieds (nach dem Laden)
+        function normalizeMember(index) {
+            const stats = ensureArtifactStats(index);
+            Object.keys(stats).forEach(slotName => ensureSlot(index, slotName));
+        }
+
+        function onTeamSelected(teamName) {
+            if (!teamName || !savedTeams[teamName]) return;
+            document.getElementById('teamNameInput').value = teamName;
+            document.getElementById('teamsSelect').value = teamName;
+
+            currentTeamMembers = JSON.parse(JSON.stringify(savedTeams[teamName]));
+            currentTeamMembers.forEach((_, i) => normalizeMember(i));
+            renderOverview();
+        }
+
+        // SYNCHRONISIERT GEÄNDERTE DETAIL-FELDER IN DEN MEMORY-STATE
+        function syncActiveDetailStats() {
+            if (activeDetailIndex < 0 || !currentTeamMembers[activeDetailIndex]) return;
+
+            ARTIFACT_SLOT_NAMES.forEach(slotName => {
+                const lvlInput = document.getElementById(`art_lvl_${slotName}`);
+                if (!lvlInput) return;
+
+                const raritySelect = document.getElementById(`art_rarity_${slotName}`);
+                const mainSelect = document.getElementById(`art_main_${slotName}`);
+                const mainValInput = document.getElementById(`art_mainval_${slotName}`);
+
+                // ensureSlot erhält die bereits eingetragenen Substats
+                const slot = ensureSlot(activeDetailIndex, slotName);
+                slot.level = parseInt(lvlInput.value) || 0;
+                slot.rarity = raritySelect ? raritySelect.value : "5★";
+                slot.main_stat = mainSelect ? mainSelect.value : "";
+                slot.main_value = mainValInput ? mainValInput.value : "";
+            });
+        }
+
+        function renderOverview() {
+            // Geänderte Detaildaten sichern, falls aktiv
+            if (activeDetailIndex >= 0) {
+                syncActiveDetailStats();
+            }
+
+            document.getElementById('overviewView').classList.remove('hidden');
+            document.getElementById('detailView').classList.add('hidden');
+            activeDetailIndex = -1;
+
+            const grid = document.getElementById('overviewView');
+            grid.innerHTML = '';
+
+            currentTeamMembers.forEach((item, index) => {
+                grid.appendChild(createCharacterCard(item, index, false));
+            });
+
+            if (currentTeamMembers.length < 4) {
+                const addSlot = document.createElement('div');
+                addSlot.className = "w-[270px] h-[536px] bg-cardBg/40 backdrop-blur-md border-2 border-dashed border-[#332d47] hover:border-accent hover:bg-cardBg/70 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all flex-shrink-0 shadow-2xl";
+                addSlot.onclick = openCharModal;
+                addSlot.innerHTML = `
+                    <span class="text-5xl text-accent mb-3 font-bold">+</span>
+                    <span class="text-sm text-[#8a889e] font-bold">Charakter hinzufügen</span>
+                `;
+                grid.appendChild(addSlot);
+            }
+        }
+
+        function createCharacterCard(item, index, isDetailMode) {
+            const char = item.character || {};
+            const saved = item.saved || {};
+
+            const card = document.createElement('div');
+
+            const elemColor = ELEMENT_COLORS[char.element] || '#5bc0be';
+            const elemBg = ELEMENT_BG_MAP[char.element] || 'rgba(18, 16, 27, 0.45)';
+
+            card.className = `w-[270px] h-[536px] backdrop-blur-md border rounded-xl flex flex-col overflow-hidden text-sm flex-shrink-0 shadow-2xl transition-all hover:scale-[1.01]`;
+            card.style.borderColor = `${elemColor}66`;
+
+            const rarityGradient = char.rarity == 5
+                ? 'background: linear-gradient(180deg, rgba(138,96,42,0.85) 0%, rgba(45,36,29,0.85) 100%);'
+                : 'background: linear-gradient(180deg, rgba(89,61,122,0.85) 0%, rgba(41,36,59,0.85) 100%);';
+
+            card.innerHTML = `
+                <!-- 1/3 KOPFBEREICH (BILD & RARITÄT) -->
+                <div class="h-44 relative p-3 flex flex-col justify-between flex-shrink-0" style="${rarityGradient}">
+                    <div class="flex justify-between items-center z-10">
+                        <span class="bg-black/60 text-white font-bold px-2 py-0.5 rounded text-xs">${char.rarity || 4}★</span>
+                        ${!isDetailMode ? `<button onclick="removeCharacter(${index})" class="w-6 h-6 bg-black/60 hover:bg-danger text-white rounded-full flex items-center justify-center font-bold text-xs transition-colors">✕</button>` : ''}
+                    </div>
+                    <img src="${escapeHtml(getIconUrl(char.name))}" onerror="this.src=''" alt="${escapeHtml(char.name)}" class="h-32 w-32 object-contain mx-auto my-auto drop-shadow-lg">
+                </div>
+
+                <!-- 2/3 TEXT & FORMULARBEREICH -->
+                <div class="p-4 flex flex-col justify-between flex-1" style="background-color: ${elemBg}">
+
+                    <!-- NAME & LEVEL -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-white text-base truncate max-w-[170px]" title="${escapeHtml(char.name || 'Unbekannt')}">${escapeHtml(char.name || 'Unbekannt')}</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border flex-shrink-0" style="color:${elemColor}; border-color:${elemColor}; background-color: rgba(0,0,0,0.3)">${escapeHtml(char.element || 'Anemo')}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-gray-300 text-xs">
+                            <span class="truncate max-w-[150px]">${escapeHtml(char.region || '')} · ${escapeHtml(char.weapon_type || '')}</span>
+                            <div class="flex items-center gap-1.5 flex-shrink-0">
+                                <span class="font-bold">Lvl</span>
+                                <input type="number" min="1" max="90" value="${saved.level || 90}" onchange="updateSavedProp(${index}, 'level', this.value)" class="w-13 h-7 bg-inputBg text-accent border border-[#332d47] rounded px-1 text-center font-bold text-sm outline-none focus:border-accent">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STERNBILDER -->
+                    <div class="flex items-center justify-between border-t border-white/10 pt-2">
+                        <span class="text-gold font-bold text-xs">C</span>
+                        <div class="flex gap-1">
+                            ${[0,1,2,3,4,5,6].map(c => `
+                                <button onclick="updateSavedProp(${index}, 'constellation', ${c}); renderCurrentView();" class="w-6 h-6 rounded text-xs font-bold ${ (saved.constellation||0) === c ? 'bg-[#2d293e] text-gold border border-gold' : 'bg-inputBg text-white border border-[#332d47] hover:border-accent' }">${c}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- WAFFE -->
+                    <div class="border-t border-white/10 pt-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-gold font-bold text-xs">Waffe</span>
+                            <button onclick="openWeaponModal(${index})" class="w-5 h-5 rounded bg-inputBg text-accent font-bold flex items-center justify-center border border-[#332d47] hover:border-accent text-xs" title="Waffe suchen">🔍</button>
+                        </div>
+                        <div class="flex gap-1.5 mb-1.5">
+                            <input type="text" readonly value="${escapeHtml(saved.weapon || char.weapon_type || '')}" onclick="openWeaponModal(${index})" class="flex-1 bg-inputBg text-gray-100 border border-[#332d47] rounded px-2 py-1 text-xs truncate cursor-pointer hover:border-accent outline-none">
+                            <input type="number" min="1" max="90" value="${saved.weapon_level || 90}" onchange="updateSavedProp(${index}, 'weapon_level', this.value)" class="w-13 h-7 bg-inputBg text-accent border border-[#332d47] rounded px-1 text-center font-bold text-xs flex-shrink-0 outline-none focus:border-accent">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gold font-bold text-xs">V</span>
+                            <div class="flex gap-1">
+                                ${[1,2,3,4,5].map(r => `
+                                    <button onclick="updateSavedProp(${index}, 'refinement', ${r}); renderCurrentView();" class="w-6 h-6 rounded text-xs font-bold ${ (saved.refinement||1) === r ? 'bg-[#2d293e] text-accent border border-gold' : 'bg-inputBg text-white border border-[#332d47] hover:border-accent' }">${r}</button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ARTEFAKTSET -->
+                    <div class="border-t border-white/10 pt-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-gold font-bold text-xs">Artefaktset</span>
+                            <button onclick="toggleDetailView(${index})" class="w-5 h-5 rounded-full bg-[#2d293e] text-accent font-bold flex items-center justify-center border border-[#332d47] hover:bg-accent hover:text-darkBg transition-colors" title="Einzelwerte & Substats bearbeiten">${isDetailMode ? '-' : '+'}</button>
+                        </div>
+                        <select onchange="updateSavedProp(${index}, 'artifact', this.value)" class="w-full bg-inputBg text-gray-200 border border-[#332d47] rounded px-2 py-1 mb-1 text-xs outline-none focus:border-accent">
+                            <option value="">Kein Set</option>
+                            ${availableArtifacts.map(a => `<option value="${escapeHtml(a.name)}" ${saved.artifact === a.name ? 'selected':''}>${escapeHtml(a.name)}</option>`).join('')}
+                        </select>
+                        <select onchange="updateSavedProp(${index}, 'artifact_2', this.value)" class="w-full bg-inputBg text-gray-200 border border-[#332d47] rounded px-2 py-1 text-xs outline-none focus:border-accent">
+                            <option value="">— Zweites 2er-Set —</option>
+                            ${availableArtifacts.map(a => `<option value="${escapeHtml(a.name)}" ${saved.artifact_2 === a.name ? 'selected':''}>${escapeHtml(a.name)}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <!-- TALENTE -->
+                    <div class="border-t border-white/10 pt-2">
+                        <span class="text-gold font-bold text-xs block mb-1">Talente (A / E / Q)</span>
+                        <div class="flex gap-2 items-center text-gray-300 text-xs justify-between">
+                            <div class="flex items-center gap-1">
+                                <span>A:</span>
+                                <input type="number" min="1" max="13" value="${saved.talents?.attack || 1}" onchange="updateTalent(${index}, 'attack', this.value)" class="w-10 h-6 bg-inputBg text-accent border border-[#332d47] rounded text-center font-bold outline-none focus:border-accent">
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span>E:</span>
+                                <input type="number" min="1" max="13" value="${saved.talents?.skill || 1}" onchange="updateTalent(${index}, 'skill', this.value)" class="w-10 h-6 bg-inputBg text-accent border border-[#332d47] rounded text-center font-bold outline-none focus:border-accent">
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span>Q:</span>
+                                <input type="number" min="1" max="13" value="${saved.talents?.burst || 1}" onchange="updateTalent(${index}, 'burst', this.value)" class="w-10 h-6 bg-inputBg text-accent border border-[#332d47] rounded text-center font-bold outline-none focus:border-accent">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            `;
+
+            return card;
+        }
+
+        function updateSavedProp(index, prop, val) {
+            if (!currentTeamMembers[index].saved) currentTeamMembers[index].saved = {};
+            currentTeamMembers[index].saved[prop] = val;
+        }
+
+        function updateTalent(index, talentProp, val) {
+            if (!currentTeamMembers[index].saved) currentTeamMembers[index].saved = {};
+            if (!currentTeamMembers[index].saved.talents) currentTeamMembers[index].saved.talents = {};
+            currentTeamMembers[index].saved.talents[talentProp] = parseInt(val) || 1;
+        }
+
+        function removeCharacter(index) {
+            currentTeamMembers.splice(index, 1);
+            renderOverview();
+        }
+
+        // Baut die aktuelle Ansicht neu auf, ohne die Detailansicht zuzuklappen
+        function renderCurrentView() {
+            if (activeDetailIndex >= 0) {
+                const idx = activeDetailIndex;
+                syncActiveDetailStats();
+                activeDetailIndex = -1;   // verhindert, dass toggleDetailView zur Übersicht springt
+                toggleDetailView(idx);
+            } else {
+                renderOverview();
+            }
+        }
+
+        function toggleDetailView(index) {
+            if (activeDetailIndex === index) {
+                renderOverview();
+                return;
+            }
+
+            // Vorige Detailwerte sichern
+            if (activeDetailIndex >= 0) {
+                syncActiveDetailStats();
+            }
+
+            activeDetailIndex = index;
+            document.getElementById('overviewView').classList.add('hidden');
+            document.getElementById('detailView').classList.remove('hidden');
+
+            const item = currentTeamMembers[index];
+            const char = item.character || {};
+            const elemColor = ELEMENT_COLORS[char.element] || '#5bc0be';
+            const elemBg = ELEMENT_BG_MAP[char.element] || 'rgba(18, 16, 27, 0.75)';
+
+            const panelBox = document.getElementById('detailPanelBox');
+            panelBox.style.backgroundColor = elemBg;
+            panelBox.style.borderColor = `${elemColor}88`;
+
+            const panelTitle = document.getElementById('detailPanelTitle');
+            panelTitle.style.color = elemColor;
+
+            const cardContainer = document.getElementById('detailCardContainer');
+            cardContainer.innerHTML = '';
+            cardContainer.appendChild(createCharacterCard(item, index, true));
+
+            renderArtifactPanel(item);
+        }
+
+        function parseSubstatEntry(entry) {
+            // Leer, null oder (fälschlich) ein Array -> leerer Eintrag
+            if (!entry || Array.isArray(entry)) return { stat: "", val: "" };
+            if (typeof entry === 'object') {
+                return { stat: entry.stat || "", val: entry.val || "" };
+            }
+            // Altformat: "KT% + 3.9"
+            const str = String(entry).trim();
+            if (!str) return { stat: "", val: "" };
+
+            const parts = str.split('+');
+            if (parts.length === 2) {
+                return { stat: parts[0].trim(), val: parts[1].trim() };
+            }
+            return { stat: str, val: "" };
+        }
+
+        function renderArtifactPanel(item) {
+            const grid = document.getElementById('artifactSlotsGrid');
+            grid.innerHTML = '';
+
+            const slotsConfig = [
+                { name: "Blume", mains: ["LP (Fix)"] },
+                { name: "Feder", mains: ["ANG (Fix)"] },
+                { name: "Sanduhr", mains: ["ANG%", "LP%", "DEF%", "Elementarkunde", "Aufladerate"] },
+                { name: "Kelch", mains: ["Pyro-SCH-Bonus%", "Hydro-SCH-Bonus%", "Kryo-SCH-Bonus%", "Elektro-SCH-Bonus%", "Anemo-SCH-Bonus%", "Geo-SCH-Bonus%", "Dendro-SCH-Bonus%", "Physischer SCH-Bonus%", "ANG%", "LP%", "DEF%", "Elementarkunde"] },
+                { name: "Krone", mains: ["KT%", "KSCH%", "ANG%", "LP%", "DEF%", "Heilungsbonus%", "Elementarkunde"] }
+            ];
+
+            const rawStats = item.saved?.artifact_stats;
+            const statsSaved = (rawStats && typeof rawStats === 'object' && !Array.isArray(rawStats)) ? rawStats : {};
+
+            slotsConfig.forEach(slot => {
+                const sData = statsSaved[slot.name] || {};
+                const subs = Array.isArray(sData.substats) ? sData.substats : [];
+
+                let subHTML = '';
+                for (let i = 0; i < 4; i++) {
+                    const parsed = parseSubstatEntry(subs[i]);
+                    const optionsHTML = SUBSTAT_OPTIONS.map(opt => {
+                        const isSel = (opt === parsed.stat) || (opt === "— Keiner —" && !parsed.stat);
+                        return `<option value="${opt}" ${isSel ? 'selected' : ''}>${opt}</option>`;
+                    }).join('');
+
+                    subHTML += `
+                        <div class="flex gap-1">
+                            <select onchange="updateArtSubField(activeDetailIndex, '${slot.name}', ${i}, 'stat', this.value)" class="flex-1 bg-inputBg text-white border border-[#332d47] rounded px-1 py-0.5 text-xs outline-none focus:border-accent truncate">
+                                ${optionsHTML}
+                            </select>
+                            <input type="text" placeholder="Wert" value="${escapeHtml(parsed.val)}" onchange="updateArtSubField(activeDetailIndex, '${slot.name}', ${i}, 'val', this.value)" class="w-14 bg-inputBg text-white border border-[#332d47] rounded px-1 py-0.5 text-xs text-center outline-none focus:border-accent">
+                        </div>
+                    `;
+                }
+
+                const slotBox = document.createElement('div');
+                slotBox.className = "bg-black/35 border border-white/10 rounded-lg p-3 text-xs backdrop-blur-sm";
+
+                slotBox.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-gray-200">${slot.name}</span>
+                        <div class="flex items-center gap-1">
+                            <span class="text-gray-400">Lvl:</span>
+                            <input type="number" min="0" max="20" value="${escapeHtml(sData.level !== undefined ? sData.level : 20)}" id="art_lvl_${slot.name}" onchange="updateArtProp('${slot.name}', 'level', this.value)" class="w-10 bg-inputBg text-accent border border-[#332d47] rounded text-center font-bold">
+                            <select id="art_rarity_${slot.name}" onchange="updateArtProp('${slot.name}', 'rarity', this.value)" class="bg-inputBg text-white border border-[#332d47] rounded">
+                                <option ${sData.rarity === '5★' ? 'selected':''}>5★</option>
+                                <option ${sData.rarity === '4★' ? 'selected':''}>4★</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 mb-2">
+                        <select id="art_main_${slot.name}" onchange="updateArtProp('${slot.name}', 'main_stat', this.value)" class="flex-1 bg-inputBg text-white border border-[#332d47] rounded px-1 py-0.5">
+                            ${slot.mains.map(m => `<option ${sData.main_stat === m ? 'selected':''}>${m}</option>`).join('')}
+                        </select>
+                        <input type="text" placeholder="Wert" id="art_mainval_${slot.name}" value="${escapeHtml(sData.main_value || '')}" onchange="updateArtProp('${slot.name}', 'main_value', this.value)" class="w-16 bg-inputBg text-white border border-[#332d47] rounded px-1 text-center">
+                    </div>
+
+                    <div class="border-t border-white/10 pt-2 mt-2">
+                        <span class="text-gray-400 font-bold block mb-1">Substats</span>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            ${subHTML}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(slotBox);
+            });
+        }
+
+        function updateArtProp(slotName, prop, val) {
+            if (activeDetailIndex < 0) return;
+            const slot = ensureSlot(activeDetailIndex, slotName);
+            slot[prop] = val;
+        }
+
+        function updateArtSubField(itemIndex, slotName, subIndex, fieldKey, val) {
+            if (itemIndex < 0 || !currentTeamMembers[itemIndex]) return;
+            const slot = ensureSlot(itemIndex, slotName);
+            slot.substats[subIndex][fieldKey] = (val === "— Keiner —") ? "" : val;
+        }
+
+        async function saveCurrentTeam() {
+            const name = document.getElementById('teamNameInput').value.trim();
+            if (!name) return alert("Bitte Teamnamen eingeben!");
+
+            // 1. Sichere bestehende Detail-Formularwerte in den Speicher
+            if (activeDetailIndex >= 0) {
+                syncActiveDetailStats();
+            }
+
+            const previousDetailIndex = activeDetailIndex;
+
+            // Alle Mitglieder normalisieren, damit nie ein Array als artifact_stats gesendet wird
+            currentTeamMembers.forEach((_, i) => normalizeMember(i));
+
+            const membersPayload = currentTeamMembers.map(m => ({
+                name: m.character.name,
+                ...(m.saved || {})
+            }));
+
+            try {
+                const res = await fetch(`${API_BASE}/teams.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, members: membersPayload })
+                });
+
+                const data = await res.json();
+                alert(data.message || data.error || "Team erfolgreich gespeichert!");
+
+                // 2. Teamdaten neu aus dem Backend laden
+                await loadInitialData(name);
+
+                // 3. Wenn vorher die Detailansicht offen war, stelle sie direkt wieder her
+                if (previousDetailIndex >= 0 && previousDetailIndex < currentTeamMembers.length) {
+                    toggleDetailView(previousDetailIndex);
+                }
+            } catch (err) {
+                alert("Fehler beim Speichern: " + err);
+            }
+        }
+
+        async function deleteCurrentTeam() {
+            const name = document.getElementById('teamsSelect').value;
+            if (!name) return alert("Bitte wähle ein Team zum Löschen aus.");
+
+            if (!confirm(`Möchtest du das Team "${name}" wirklich löschen?`)) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/teams.php?name=${encodeURIComponent(name)}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                alert(data.message || "Team gelöscht.");
+                activeDetailIndex = -1;
+                await loadInitialData();
+            } catch (err) {
+                alert("Fehler beim Löschen: " + err);
+            }
+        }
+
+        function openCharModal() {
+            filterCharacters();
+            document.getElementById('charModal').classList.remove('hidden');
+        }
+
+        function closeCharModal() {
+            document.getElementById('charModal').classList.add('hidden');
+        }
+
+        function filterCharacters() {
+            const search = document.getElementById('charSearch').value.toLowerCase();
+            const reg = document.getElementById('charRegionFilter').value;
+            const elem = document.getElementById('charElemFilter').value;
+            const rar = document.getElementById('charRarityFilter').value;
+
+            const filtered = availableCharacters.filter(c => {
+                if (search && !c.name.toLowerCase().includes(search)) return false;
+                if (reg && c.region !== reg) return false;
+                if (elem && c.element !== elem) return false;
+                if (rar && c.rarity != rar) return false;
+                return true;
+            });
+
+            const tbody = document.getElementById('charTableBody');
+            tbody.innerHTML = filtered.map(c => `
+                <tr data-name="${escapeHtml(c.name)}" class="hover:bg-[#262338]/60 cursor-pointer transition-colors">
+                    <td class="p-2"><img src="${escapeHtml(getIconUrl(c.name))}" class="w-8 h-8 object-contain"></td>
+                    <td class="p-2 font-bold text-white">${escapeHtml(c.name)}</td>
+                    <td class="p-2">${escapeHtml(c.element)}</td>
+                    <td class="p-2">${escapeHtml(c.weapon_type)}</td>
+                    <td class="p-2">${escapeHtml(c.region)}</td>
+                    <td class="p-2 text-center font-bold text-gold">${escapeHtml(c.rarity)}★</td>
+                </tr>
+            `).join('');
+        }
+
+        function selectCharacter(charName) {
+            const charObj = availableCharacters.find(c => c.name === charName);
+            if (!charObj || currentTeamMembers.length >= 4) return;
+
+            // Doppelte Charaktere im selben Team verhindern
+            if (currentTeamMembers.some(m => m.character && m.character.name === charName)) {
+                alert(`${charName} ist bereits im Team.`);
+                return;
+            }
+
+            currentTeamMembers.push({
+                character: charObj,
+                saved: { name: charName, level: 90, constellation: 0, artifact_stats: {} }
+            });
+            closeCharModal();
+            renderOverview();
+        }
+
+        function openWeaponModal(memberIndex) {
+            activeWeaponTargetIndex = memberIndex;
+            const item = currentTeamMembers[memberIndex];
+            const charWeaponType = item?.character?.weapon_type || "";
+
+            const typeFilter = document.getElementById('weaponTypeFilter');
+            if (charWeaponType) {
+                typeFilter.value = charWeaponType;
+            } else {
+                typeFilter.value = "";
+            }
+
+            document.getElementById('weaponSearch').value = "";
+            document.getElementById('weaponRarityFilter').value = "";
+
+            filterWeapons();
+            document.getElementById('weaponModal').classList.remove('hidden');
+        }
+
+        function closeWeaponModal() {
+            document.getElementById('weaponModal').classList.add('hidden');
+            activeWeaponTargetIndex = -1;
+        }
+
+        function filterWeapons() {
+            const search = document.getElementById('weaponSearch').value.toLowerCase().trim();
+            const type = document.getElementById('weaponTypeFilter').value;
+            const rarity = document.getElementById('weaponRarityFilter').value;
+
+            const filtered = availableWeapons.filter(w => {
+                const wName = w.name || "";
+                const wType = w.weapon_type || w.type || "";
+                const wRarity = w.rarity || 4;
+
+                if (search && !wName.toLowerCase().includes(search)) return false;
+                if (type && wType !== type) return false;
+                if (rarity && String(wRarity) !== String(rarity)) return false;
+                return true;
+            });
+
+            const tbody = document.getElementById('weaponTableBody');
+            tbody.innerHTML = filtered.map(w => {
+                const wName = w.name || "";
+                const wType = w.weapon_type || w.type || "";
+                const wRarity = w.rarity || 4;
+                const iconUrl = getIconUrl(wName);
+
+                return `
+                    <tr data-name="${escapeHtml(wName)}" class="hover:bg-[#262338]/60 cursor-pointer transition-colors">
+                        <td class="p-2"><img src="${escapeHtml(iconUrl)}" onerror="this.src=''" class="w-8 h-8 object-contain"></td>
+                        <td class="p-2 font-bold text-white">${escapeHtml(wName)}</td>
+                        <td class="p-2">${escapeHtml(wType)}</td>
+                        <td class="p-2 text-center font-bold text-gold">${escapeHtml(wRarity)}★</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('weaponCountLabel').textContent = `${filtered.length} Waffen gefunden`;
+        }
+
+        function selectWeapon(weaponName) {
+            if (activeWeaponTargetIndex >= 0 && activeWeaponTargetIndex < currentTeamMembers.length) {
+                updateSavedProp(activeWeaponTargetIndex, 'weapon', weaponName);
+                closeWeaponModal();
+                renderCurrentView();
+            }
+        }
+    </script>
+</body>
+</html>
